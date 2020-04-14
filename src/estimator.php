@@ -76,3 +76,110 @@ function getDaysToElapse($timeToElapse, $periodType) {
 }
 
 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: OPTIONS, OPTIONS,GET,POST");
+header("Access-Control-Max-Age: 3600");
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+$uri_path = array_filter(explode( '/', $uri ));
+$content_type = end($uri_path);
+$requestMethod = $_SERVER["REQUEST_METHOD"];
+
+
+$time_pre = microtime(true);
+if ( $content_type == 'xml' ) {
+
+	header("Content-Type: application/xml; charset=UTF-8");
+	$response['status_code_header'] = 'HTTP/1.1 200 OK';
+
+	$input = trim(file_get_contents("PHP://input"));
+	$input = json_decode($input, true);
+
+		// dump($input);
+
+	$result = covid19ImpactEstimator($input);
+
+	$xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8" ?><data/>');
+	to_xml($xml, $result);
+	$var = $xml->asXML();
+
+	header($response['status_code_header']);
+	echo $var;
+
+		// $response['body'] = $var;
+		// echo $response['body'];
+
+} elseif ( $content_type == 'logs' ) {
+
+	header("Content-Type: text/plain; charset=UTF-8");
+	$response['status_code_header'] = 'HTTP/1.1 200 OK';
+
+	$file = "logs.txt";
+	$json = file_get_contents($file);
+
+	echo $json;
+
+
+} else {
+
+	header("Content-Type: application/json; charset=UTF-8");
+	$response['status_code_header'] = 'HTTP/1.1 200 OK';
+
+	$input = trim(file_get_contents("PHP://input"));
+	$input = json_decode($input, true);
+
+		// dump($input);
+
+	$result = covid19ImpactEstimator($input);
+
+	header($response['status_code_header']);
+	echo json_encode($result);
+
+
+		// $response['body'] = json_encode($result);
+		// echo $response['body'];
+
+}
+
+logRequest( $requestMethod, $uri, $time_pre );
+
+
+
+function to_xml(SimpleXMLElement $object, array $data) {   
+
+    foreach ($data as $key => $value) {
+        if (is_array($value)) {
+            $new_object = $object->addChild($key);
+            to_xml($new_object, $value);
+        } else {
+            // if the key is an integer, it needs text with it to actually work.
+            if ($key == (int) $key) {
+                $key = "$key";
+            }
+
+            $object->addChild($key, $value);
+        }   
+    }   
+} 
+
+
+function logRequest( $requestMethod, $uri, $time_pre ) {
+
+	$responseCode = http_response_code(); 
+
+	$time_post = microtime(true);
+	$exec_time = $time_post - $time_pre;
+	$exec_time = strtok($exec_time, ".");
+	$length = strlen($exec_time);
+
+	if ($length < 2) {
+		$exec_time = '0' . $exec_time;
+	}
+
+	$txt = "$requestMethod" . "\t\t" . "$uri" .  "\t\t" . $responseCode . "\t\t" . $exec_time . 'ms';
+	$myfile = file_put_contents( 'logs.txt', $txt.PHP_EOL , FILE_APPEND );
+
+}
+
