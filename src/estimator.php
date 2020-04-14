@@ -33,7 +33,6 @@ function covid19ImpactEstimator($data) {
 	$dollarsInFlight_severely											= ($infectionsByRequestedTime_severely * $avgDailyIncomeInUSD * $avgDailyIncomePopulation) 
 																										/ $timeToElapse;
 
-
 	$estimate['impact']['currentlyInfected'] 												= (int) $currentlyInfected;
 	$estimate['severeImpact']['currentlyInfected'] 									= (int) $currentlyInfected_severely;
 	$estimate['impact']['infectionsByRequestedTime'] 								= (int) $infectionsByRequestedTime;
@@ -86,12 +85,6 @@ $content_type 	= end($uri_path);
 $requestMethod 	= $_SERVER["REQUEST_METHOD"];
 
 
-// Endpoint start with /api else results in a 404 Not Found
-if ($uri_path[1] !== 'api') {
-    header("HTTP/1.1 404 Not Found");
-    exit();
-}
-
 
 $time_pre_exec = microtime(true);
 if ( $content_type == 'xml' ) {
@@ -105,9 +98,8 @@ if ( $content_type == 'xml' ) {
 	to_xml($xml, $estimate);
 	$result = $xml->asXML();
 
-	$response['status_code_header'] = 'HTTP/1.1 200 OK';
-	$response['body'] =  $result;
-	return $response
+	header("HTTP/1.1 200 OK");
+	echo $result;
 	
 } elseif ( $content_type == 'logs' ) {
 
@@ -115,45 +107,43 @@ if ( $content_type == 'xml' ) {
 	$file = "logs.txt";
 	$logs = file_get_contents($file);
 
-	$response['status_code_header'] = 'HTTP/1.1 200 OK';
-	$response['body'] =  $logs;
-	return $response;
+	header("HTTP/1.1 200 OK");
+	echo $logs;
 
 } else {
 
 	header("Content-Type: application/json; charset=UTF-8");
-
 	$input = trim(file_get_contents("PHP://input"));
 	$input = json_decode($input, true);
 
 	$estimate	= covid19ImpactEstimator($input);
-	$response['status_code_header'] = 'HTTP/1.1 200 OK';
-	$response['body'] = json_encode($estimate);
-	return $response;
+	header("HTTP/1.1 200 OK");
+	$response = json_encode($estimate);
+	echo $response;
 }
 
-logRequest( $requestMethod, $uri, $time_pre );
+logRequest( $requestMethod, $uri, $time_pre_exec );
 
 
 function to_xml(SimpleXMLElement $object, array $data) {   
 
-    foreach ($data as $key => $value) {
-        if (is_array($value)) {
-            $new_object = $object->addChild($key);
-            to_xml($new_object, $value);
-        } else {
-            // if the key is an integer, it needs text with it to actually work.
-            if ($key == (int) $key) {
-                $key = "$key";
-            }
+  foreach ($data as $key => $value) {
+      if (is_array($value)) {
+          $new_object = $object->addChild($key);
+          to_xml($new_object, $value);
+      } else {
+          // if the key is an integer, it needs text with it to actually work.
+          if ($key == (int) $key) {
+              $key = "$key";
+          }
 
-            $object->addChild($key, $value);
-        }   
-    }   
+          $object->addChild($key, $value);
+      }   
+  }   
 } 
 
 
-function logRequest( $requestMethod, $uri, $time_pre ) {
+function logRequest( $requestMethod, $uri, $time_pre_exec ) {
 
 	$responseCode = http_response_code(); 
 
