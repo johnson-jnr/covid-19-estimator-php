@@ -3,7 +3,6 @@
 
 function covid19ImpactEstimator($data) {
 
-
 	$estimate = array();
 	$estimate['data'] = $data;
 
@@ -85,7 +84,6 @@ $content_type 	= end($uri_path);
 $requestMethod 	= $_SERVER["REQUEST_METHOD"];
 
 
-
 $time_pre_exec = microtime(true);
 if ( $content_type == 'xml' ) {
 
@@ -124,7 +122,6 @@ if ( $content_type == 'xml' ) {
 
 logRequest( $requestMethod, $uri, $time_pre_exec );
 
-
 function to_xml(SimpleXMLElement $object, array $data) {   
 
   foreach ($data as $key => $value) {
@@ -142,11 +139,9 @@ function to_xml(SimpleXMLElement $object, array $data) {
   }   
 } 
 
-
 function logRequest( $requestMethod, $uri, $time_pre_exec ) {
 
 	$responseCode = http_response_code(); 
-
 	$time_post_exec = microtime(true);
 	$exec_time 			= $time_post_exec - $time_pre_exec;
 	$exec_time 			= strtok($exec_time, ".");
@@ -158,6 +153,5 @@ function logRequest( $requestMethod, $uri, $time_pre_exec ) {
 
 	$log_txt = "$requestMethod" . "\t\t" . "$uri" .  "\t\t" . $responseCode . "\t\t" . $exec_time . 'ms';
 	file_put_contents( 'logs.txt', $log_txt.PHP_EOL , FILE_APPEND );
-
 }
 
