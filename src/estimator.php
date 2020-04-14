@@ -88,54 +88,47 @@ $content_type = end($uri_path);
 $requestMethod = $_SERVER["REQUEST_METHOD"];
 
 
-$time_pre = microtime(true);
+$time_pre_exec = microtime(true);
+
 if ( $content_type == 'xml' ) {
 
 	header("Content-Type: application/xml; charset=UTF-8");
-	$response['status_code_header'] = 'HTTP/1.1 200 OK';
 
 	$input = trim(file_get_contents("PHP://input"));
 	$input = json_decode($input, true);
 
-		// dump($input);
-
-	$result = covid19ImpactEstimator($input);
-
+	$estimate = covid19ImpactEstimator($input);
 	$xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8" ?><data/>');
-	to_xml($xml, $result);
-	$var = $xml->asXML();
+	to_xml($xml, $estimate);
+	$result = $xml->asXML();
 
-	header($response['status_code_header']);
-	echo $var;
-
+	$response['status_code_header'] = 'HTTP/1.1 200 OK';
+	$response['body'] =  $result;
+	return $response
 		// $response['body'] = $var;
 		// echo $response['body'];
 
 } elseif ( $content_type == 'logs' ) {
 
 	header("Content-Type: text/plain; charset=UTF-8");
-	$response['status_code_header'] = 'HTTP/1.1 200 OK';
-
 	$file = "logs.txt";
-	$json = file_get_contents($file);
+	$logs = file_get_contents($file);
 
-	echo $json;
-
+	$response['status_code_header'] = 'HTTP/1.1 200 OK';
+	$response['body'] =  $logs;
+	return $response;
 
 } else {
 
 	header("Content-Type: application/json; charset=UTF-8");
-	$response['status_code_header'] = 'HTTP/1.1 200 OK';
 
 	$input = trim(file_get_contents("PHP://input"));
 	$input = json_decode($input, true);
 
-		// dump($input);
-
-	$result = covid19ImpactEstimator($input);
-
-	header($response['status_code_header']);
-	echo json_encode($result);
+	$estimate = covid19ImpactEstimator($input);
+	$response['status_code_header'] = 'HTTP/1.1 200 OK';
+	$response['body'] = json_encode($estimate);
+	return $response;
 
 
 		// $response['body'] = json_encode($result);
@@ -169,8 +162,8 @@ function logRequest( $requestMethod, $uri, $time_pre ) {
 
 	$responseCode = http_response_code(); 
 
-	$time_post = microtime(true);
-	$exec_time = $time_post - $time_pre;
+	$time_post_exec = microtime(true);
+	$exec_time = $time_post_exec - $time_pre_exec;
 	$exec_time = strtok($exec_time, ".");
 	$length = strlen($exec_time);
 
