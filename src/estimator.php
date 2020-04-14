@@ -77,7 +77,7 @@ function getDaysToElapse($timeToElapse, $periodType) {
 
 
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: OPTIONS, OPTIONS,GET,POST");
+header("Access-Control-Allow-Methods: OPTIONS,GET,POST");
 header("Access-Control-Max-Age: 3600");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
